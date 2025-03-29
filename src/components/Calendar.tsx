@@ -1,194 +1,127 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Eye, Edit, Trash2 } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addWeeks, startOfWeek, endOfWeek, addDays, isSameDay, parseISO, parse } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Undo } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, isToday } from 'date-fns';
+import axios from '../utils/axios'; // Import Axios instance with token
 
-interface Event {
-  id: string;
+interface Meeting {
+  _id: string;
   title: string;
   date: string; // ISO string format
-  time: string;
+  startTime: string;
+  duration: number;
   email: string;
-  color: string;
-  description?: string;
+  isCancelled: boolean; // New property to track canceled meetings
 }
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'Month' | 'Week' | 'Day'>('Month');
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: '1',
-      title: 'Team Meeting',
-      date: '2024-03-20',
-      time: '10:00 AM',
-      email: 'team@example.com',
-      color: 'bg-blue-500',
-      description: 'Weekly team sync'
-    },
-    {
-      id: '2',
-      title: 'Project Review',
-      date: '2024-03-22',
-      time: '2:00 PM',
-      email: 'project@example.com',
-      color: 'bg-purple-500',
-      description: 'Q1 project review'
-    }
-  ]);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: '',
     date: format(new Date(), 'yyyy-MM-dd'),
-    time: format(new Date(), 'HH:mm'),
+    startTime: '09:00',
+    duration: 30,
     email: '',
-    color: 'bg-blue-500',
-    description: ''
   });
+  const [showCancelReason, setShowCancelReason] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
 
-  const getDaysForView = () => {
-    switch (view) {
-      case 'Month':
-        return eachDayOfInterval({
-          start: startOfMonth(currentDate),
-          end: endOfMonth(currentDate)
-        });
-      case 'Week':
-        return eachDayOfInterval({
-          start: startOfWeek(currentDate),
-          end: endOfWeek(currentDate)
-        });
-      case 'Day':
-        return [currentDate];
-      default:
-        return [];
-    }
-  };
-
-  const getEventsForDay = (day: Date) => {
-    return events.filter(event => isSameDay(parseISO(event.date), day));
-  };
-
-  const navigatePrevious = () => {
-    switch (view) {
-      case 'Month':
-        setCurrentDate(subMonths(currentDate, 1));
-        break;
-      case 'Week':
-        setCurrentDate(addWeeks(currentDate, -1));
-        break;
-      case 'Day':
-        setCurrentDate(addDays(currentDate, -1));
-        break;
-    }
-  };
-
-  const navigateNext = () => {
-    switch (view) {
-      case 'Month':
-        setCurrentDate(addMonths(currentDate, 1));
-        break;
-      case 'Week':
-        setCurrentDate(addWeeks(currentDate, 1));
-        break;
-      case 'Day':
-        setCurrentDate(addDays(currentDate, 1));
-        break;
-    }
-  };
-
-  const formatTimeForDisplay = (timeString: string) => {
+  // Fetch meetings from the backend
+  const fetchMeetings = async () => {
     try {
-      // Handle 24-hour format input
-      if (timeString.includes(':')) {
-        const [hours, minutes] = timeString.split(':');
-        const date = new Date();
-        date.setHours(parseInt(hours, 10));
-        date.setMinutes(parseInt(minutes, 10));
-        return format(date, 'h:mm a');
-      }
-      // Handle already formatted time
-      return timeString;
+      const response = await axios.get('/meeting');
+      setMeetings(response.data);
     } catch (error) {
-      return timeString;
+      console.error('Error fetching meetings:', error);
+      alert('Failed to fetch meetings. Please try again.');
     }
   };
 
-  const handleAddEvent = () => {
-    if (newEvent.title && newEvent.time && newEvent.email && newEvent.date) {
-      const formattedTime = formatTimeForDisplay(newEvent.time);
-      
-      if (editingEventId) {
-        // Update existing event
-        setEvents(events.map(event => 
-          event.id === editingEventId ? {
-            ...newEvent,
-            id: editingEventId,
-            time: formattedTime
-          } : event
-        ));
-      } else {
-        // Add new event
-        setEvents([
-          ...events,
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            ...newEvent,
-            time: formattedTime
-          }
-        ]);
-      }
+  // Add a new meeting
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      // Reset form
+    // Validate date is not in the past
+    const eventDate = new Date(`${newEvent.date}T${newEvent.startTime}`);
+    if (eventDate < new Date()) {
+      alert('Cannot schedule meetings in the past.');
+      return;
+    }
+
+    try {
+      const response = await axios.post('/meeting', newEvent);
+      setMeetings([...meetings, response.data]);
+      setShowAddEvent(false);
       setNewEvent({
         title: '',
         date: format(new Date(), 'yyyy-MM-dd'),
-        time: format(new Date(), 'HH:mm'),
+        startTime: '09:00',
+        duration: 30,
         email: '',
-        color: 'bg-blue-500',
-        description: ''
       });
-      setEditingEventId(null);
-      setShowEventModal(false);
+      alert('Meeting added successfully!');
+    } catch (error) {
+      console.error('Error adding meeting:', error);
+      alert('Failed to add meeting. Please try again.');
     }
   };
 
-  const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter(event => event.id !== id));
+  // Cancel a meeting
+  const handleCancelMeeting = async (meeting: Meeting) => {
+    try {
+      await axios.put(`/meeting/${meeting._id}/cancel`, { reason: cancelReason });
+      setMeetings(
+        meetings.map((m) =>
+          m._id === meeting._id ? { ...m, isCancelled: true } : m
+        )
+      );
+      setShowCancelReason(false);
+      setCancelReason('');
+      alert('Meeting canceled successfully!');
+    } catch (error) {
+      console.error('Error canceling meeting:', error);
+      alert('Failed to cancel meeting. Please try again.');
+    }
   };
 
-  const handleViewEvent = (event: Event) => {
-    alert(`
-      Event Details:
-      Title: ${event.title}
-      Date: ${format(parseISO(event.date), 'MMMM d, yyyy')}
-      Time: ${event.time}
-      Email: ${event.email}
-      Description: ${event.description || 'No description provided'}
-    `);
+  // Restore a canceled meeting
+  const handleRestoreMeeting = async (meeting: Meeting) => {
+    try {
+      const response = await axios.put(`/meeting/${meeting._id}/restore`);
+      setMeetings(
+        meetings.map((m) =>
+          m._id === meeting._id ? { ...response.data, isCancelled: false } : m
+        )
+      );
+      alert('Meeting restored successfully!');
+    } catch (error) {
+      console.error('Error restoring meeting:', error);
+      alert('Failed to restore meeting. Please try again.');
+    }
   };
 
-  const handleEditEvent = (event: Event) => {
-    // Convert 12-hour format to 24-hour format for the time input
-    const time24 = parse(event.time, 'h:mm a', new Date());
-    
-    setNewEvent({
-      title: event.title,
-      date: event.date,
-      time: format(time24, 'HH:mm'),
-      email: event.email,
-      color: event.color,
-      description: event.description || ''
-    });
-    setEditingEventId(event.id);
-    setShowEventModal(true);
+  // Get days in the current month
+  const getDaysInMonth = () => {
+    const start = startOfWeek(startOfMonth(currentDate));
+    const end = endOfWeek(endOfMonth(currentDate));
+    return eachDayOfInterval({ start, end });
   };
 
-  const days = getDaysForView();
+  const getEventsForDay = (day: Date) => {
+    return meetings.filter(
+      (meeting) => isSameDay(new Date(meeting.date), day) && !meeting.isCancelled
+    );
+  };
+
+  useEffect(() => {
+    fetchMeetings();
+  }, []);
 
   return (
-    <div className="flex-1 p-2 md:p-6 bg-gray-900">
-      <div className="bg-gray-800 rounded-xl shadow-lg p-3 md:p-6">
+    <div className="flex-1 p-4 bg-gray-900">
+      <div className="bg-gray-800 rounded-xl shadow-lg p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
             <h2 className="text-xl md:text-2xl font-semibold text-white">
@@ -196,13 +129,13 @@ const Calendar = () => {
             </h2>
             <div className="flex items-center space-x-2">
               <button
-                onClick={navigatePrevious}
+                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
                 className="p-2 hover:bg-gray-700 rounded-full text-gray-300"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
-                onClick={navigateNext}
+                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
                 className="p-2 hover:bg-gray-700 rounded-full text-gray-300"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -210,31 +143,13 @@ const Calendar = () => {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-            <div className="flex bg-gray-700 rounded-lg p-1 w-full md:w-auto">
-              {['Month', 'Week', 'Day'].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v as 'Month' | 'Week' | 'Day')}
-                  className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium ${
-                    view === v
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-            
-            <button 
-              onClick={() => setShowEventModal(true)}
-              className="w-full md:w-auto flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Add Event</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddEvent(true)}
+            className="w-full md:w-auto flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Event</span>
+          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -248,36 +163,27 @@ const Calendar = () => {
                   {day}
                 </div>
               ))}
-              
-              {days.map((day) => {
+
+              {getDaysInMonth().map((day) => {
                 const dayEvents = getEventsForDay(day);
                 return (
                   <div
                     key={day.toString()}
                     className={`relative bg-gray-800 min-h-[100px] md:min-h-[120px] p-2 ${
-                      !isSameMonth(day, currentDate)
-                        ? 'bg-gray-900 text-gray-600'
-                        : ''
+                      isToday(day) ? 'bg-blue-600 text-white' : 'text-gray-300'
                     }`}
                   >
-                    <div
-                      className={`flex items-center justify-center h-6 w-6 rounded-full ${
-                        isToday(day)
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300'
-                      }`}
-                    >
+                    <div className="flex items-center justify-center h-6 w-6 rounded-full">
                       {format(day, 'd')}
                     </div>
-                    
+
                     <div className="mt-2 space-y-1">
                       {dayEvents.map((event) => (
                         <div
-                          key={event.id}
-                          className={`${event.color} text-white text-xs p-1 rounded truncate cursor-pointer`}
-                          onClick={() => handleViewEvent(event)}
+                          key={event._id}
+                          className="bg-blue-500 text-white text-xs p-1 rounded truncate cursor-pointer"
                         >
-                          {event.time} - {event.title}
+                          {event.startTime} - {event.title}
                         </div>
                       ))}
                     </div>
@@ -289,63 +195,116 @@ const Calendar = () => {
         </div>
       </div>
 
-      <div className="mt-6 bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Upcoming Events</h3>
-        <div className="space-y-4">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors space-y-2 md:space-y-0"
-            >
-              <div className="flex items-center space-x-4">
-                <div className={`h-3 w-3 rounded-full ${event.color}`} />
+      <div className="bg-gray-800 rounded-xl shadow-lg p-6 mt-6">
+        <h3 className="text-xl font-semibold text-white mb-4">Upcoming Meetings</h3>
+        {meetings.length === 0 ? (
+          <p className="text-gray-400">No upcoming meetings.</p>
+        ) : (
+          <ul className="space-y-4">
+            {meetings.map((meeting) => (
+              <li
+                key={meeting._id}
+                className={`flex justify-between items-center bg-gray-700 p-4 rounded-lg ${
+                  meeting.isCancelled ? 'opacity-50' : ''
+                }`}
+              >
                 <div>
-                  <h4 className="font-medium text-white">{event.title}</h4>
-                  <p className="text-sm text-gray-400">
-                    {format(parseISO(event.date), 'MMM d, yyyy')} at {event.time}
+                  <h4 className="text-white font-semibold">{meeting.title}</h4>
+                  <p className="text-gray-400">
+                    {format(new Date(`${meeting.date}T${meeting.startTime}`), 'EEEE, MMMM d, yyyy')} at {meeting.startTime} ({meeting.duration} min)
                   </p>
-                  <p className="text-sm text-gray-400">{event.email}</p>
+                  <p className="text-gray-400">Email: {meeting.email}</p>
                 </div>
-              </div>
-              <div className="flex items-center justify-end space-x-2">
-                <button 
-                  onClick={() => handleViewEvent(event)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <Eye className="h-5 w-5" />
-                </button>
-                <button 
-                  onClick={() => handleEditEvent(event)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <Edit className="h-5 w-5" />
-                </button>
-                <button 
-                  onClick={() => handleDeleteEvent(event.id)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                {meeting.isCancelled ? (
+                  <button
+                    onClick={() => handleRestoreMeeting(meeting)}
+                    className="text-green-500 hover:text-green-400"
+                  >
+                    <Undo className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSelectedMeeting(meeting);
+                      setShowCancelReason(true);
+                    }}
+                    className="text-red-500 hover:text-red-400"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {showEventModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              {editingEventId ? 'Edit Event' : 'Add New Event'}
-            </h3>
-            <div className="space-y-4">
+      {showCancelReason && selectedMeeting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+            <button
+              onClick={() => setShowCancelReason(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-semibold text-white mb-4 text-center">Cancel Meeting</h3>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCancelMeeting(selectedMeeting);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Reason for Cancellation</label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter reason for cancellation"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelReason(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Confirm Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAddEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+            <button
+              onClick={() => setShowAddEvent(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-semibold text-white mb-4 text-center">Add New Meeting</h3>
+            <form onSubmit={handleAddEvent} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
                 <input
                   type="text"
                   value={newEvent.title}
-                  onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
               <div>
@@ -353,17 +312,29 @@ const Calendar = () => {
                 <input
                   type="date"
                   value={newEvent.date}
-                  onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Time</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Start Time</label>
                 <input
                   type="time"
-                  value={newEvent.time}
-                  onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  value={newEvent.startTime}
+                  onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Duration (minutes)</label>
+                <input
+                  type="number"
+                  value={newEvent.duration}
+                  onChange={(e) => setNewEvent({ ...newEvent, duration: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
               <div>
@@ -371,59 +342,27 @@ const Calendar = () => {
                 <input
                   type="email"
                   value={newEvent.email}
-                  onChange={(e) => setNewEvent({...newEvent, email: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="example@email.com"
+                  onChange={(e) => setNewEvent({ ...newEvent, email: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                <textarea
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Color</label>
-                <select
-                  value={newEvent.color}
-                  onChange={(e) => setNewEvent({...newEvent, color: e.target.value})}
-                  className="w-full bg-gray-700 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="bg-blue-500">Blue</option>
-                  <option value="bg-purple-500">Purple</option>
-                  <option value="bg-green-500">Green</option>
-                  <option value="bg-red-500">Red</option>
-                </select>
-              </div>
-              <div className="flex justify-end space-x-2 mt-6">
+              <div className="flex justify-end space-x-4">
                 <button
-                  onClick={() => {
-                    setShowEventModal(false);
-                    setEditingEventId(null);
-                    setNewEvent({
-                      title: '',
-                      date: format(new Date(), 'yyyy-MM-dd'),
-                      time: format(new Date(), 'HH:mm'),
-                      email: '',
-                      color: 'bg-blue-500',
-                      description: ''
-                    });
-                  }}
-                  className="px-4 py-2 text-gray-300 hover:text-white"
+                  type="button"
+                  onClick={() => setShowAddEvent(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddEvent}
+                  type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  {editingEventId ? 'Update Event' : 'Add Event'}
+                  Add Meeting
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

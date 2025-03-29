@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Grid } from 'lucide-react';
-import StageCard from '../components/StageCard';
-import NewOpportunityModal from '../components/NewOpportunityModal';
 import axios from 'axios';
 
 function Opportunities() {
-  const [pipelines, setPipelines] = useState([]); // Fetch pipelines from API
+  const [pipelines, setPipelines] = useState([]);
   const [selectedPipeline, setSelectedPipeline] = useState('');
-  const [opportunities, setOpportunities] = useState({}); // Pre-fetched opportunities for all stages
-  const [selectedStage, setSelectedStage] = useState(null); // Selected stage
+  const [opportunities, setOpportunities] = useState({});
+  const [selectedStage, setSelectedStage] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newOpportunity, setNewOpportunity] = useState({
     name: '',
@@ -21,13 +19,13 @@ function Opportunities() {
   useEffect(() => {
     const fetchPipelines = async () => {
       try {
-        const token = localStorage.getItem('token'); // Get the token from localStorage
+        const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
         const response = await axios.get('http://82.180.137.7:5000/api/pipelines', { headers });
         setPipelines(response.data);
         if (response.data.length > 0) {
-          setSelectedPipeline(response.data[0].name); // Set the first pipeline as selected by default
+          setSelectedPipeline(response.data[0].name);
         }
       } catch (error) {
         console.error('Error fetching pipelines:', error);
@@ -43,7 +41,7 @@ function Opportunities() {
       if (!selectedPipeline) return;
 
       try {
-        const token = localStorage.getItem('token'); // Get the token from localStorage
+        const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
         const pipeline = pipelines.find((p) => p.name === selectedPipeline);
@@ -51,7 +49,6 @@ function Opportunities() {
 
         const opportunitiesByStage = {};
 
-        // Fetch opportunities for each stage in the selected pipeline
         await Promise.all(
           pipeline.stages.map(async (stage) => {
             const response = await axios.get(
@@ -62,7 +59,7 @@ function Opportunities() {
           })
         );
 
-        setOpportunities(opportunitiesByStage); // Store all opportunities in state
+        setOpportunities(opportunitiesByStage);
       } catch (error) {
         console.error('Error fetching opportunities:', error);
       }
@@ -104,10 +101,9 @@ function Opportunities() {
     }
 
     try {
-      const token = localStorage.getItem('token'); // Get the token from localStorage
+      const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Find the pipelineId and stageId based on the selected pipeline and stage
       const pipeline = pipelines.find((p) => p.name === selectedPipeline);
       if (!pipeline) {
         alert('Pipeline not found.');
@@ -123,24 +119,22 @@ function Opportunities() {
       const pipelineId = pipeline._id;
       const stageId = stage._id;
 
-      // Make the POST request to create the opportunity
       const response = await axios.post(
         `http://82.180.137.7:5000/api/opportunities/${pipelineId}/${stageId}/opportunities`,
         {
-          title: newOpportunity.name, // Opportunity title
-          description: newOpportunity.description || '', // Optional description
-          value: newOpportunity.value || 0, // Opportunity value
-          status: 'Open', // Default status
+          title: newOpportunity.name,
+          description: newOpportunity.description || '',
+          value: newOpportunity.value || 0,
+          status: 'Open',
         },
         { headers }
       );
 
-      // Update the opportunities list for the specific stage
       setOpportunities((prev) => ({
         ...prev,
         [stageId]: [...(prev[stageId] || []), response.data],
       }));
-      handleCloseAddModal(); // Close the modal after successful creation
+      handleCloseAddModal();
     } catch (error) {
       console.error('Error creating opportunity:', error);
       alert('Failed to create opportunity. Please try again.');
@@ -149,7 +143,7 @@ function Opportunities() {
 
   // Handle selecting a stage
   const handleStageClick = (stageId) => {
-    setSelectedStage(stageId === selectedStage ? null : stageId); // Toggle stage selection
+    setSelectedStage(stageId === selectedStage ? null : stageId);
   };
 
   return (
@@ -187,23 +181,126 @@ function Opportunities() {
         {pipelines
           .find((p) => p.name === selectedPipeline)
           ?.stages.map((stage) => (
-            <StageCard
+            <div
               key={stage._id}
-              stage={stage}
-              opportunities={opportunities[stage._id] || []}
+              className={`border border-gray-700 rounded-lg p-4 cursor-pointer hover:border-red-500 transition ${
+                selectedStage === stage._id ? 'border-red-500' : ''
+              }`}
               onClick={() => handleStageClick(stage._id)}
-            />
+            >
+              <div className="stage-header">
+                <div
+                  className="stage-indicator w-4 h-4 rounded-full"
+                  style={{ backgroundColor: stage.color }}
+                ></div>
+                <h3 className="stage-title text-lg font-bold text-white">{stage.name}</h3>
+              </div>
+              <div className="stage-stats text-sm text-gray-400 mt-2">
+                <div>{opportunities[stage._id]?.length || 0} Opportunities</div>
+                <div>
+                  Rs{' '}
+                  {opportunities[stage._id]
+                    ?.reduce((sum, opp) => sum + (opp.value || 0), 0)
+                    .toLocaleString() || 0}
+                </div>
+              </div>
+            </div>
           ))}
       </div>
 
+      {selectedStage && (
+        <div className="mt-6">
+          <h3 className="text-xl font-bold text-white mb-4">Opportunities in Selected Stage</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {opportunities[selectedStage]?.map((opportunity) => (
+              <div
+                key={opportunity._id}
+                className="bg-[#2a2a2a] border border-red-900/50 rounded-lg p-4"
+              >
+                <div className="font-bold text-white">{opportunity.title}</div>
+                <div className="text-gray-400">{opportunity.description}</div>
+                <div className="text-gray-400">
+                  Value: Rs {(opportunity.value || 0).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {showAddModal && (
-        <NewOpportunityModal
-          onClose={handleCloseAddModal}
-          onSubmit={handleAddOpportunity}
-          opportunity={newOpportunity}
-          onInputChange={handleInputChange}
-          stages={pipelines.find((p) => p.name === selectedPipeline)?.stages || []}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4 text-white">Add New Opportunity</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-300">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newOpportunity.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter opportunity name"
+                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-300">Description</label>
+                <input
+                  type="text"
+                  name="description"
+                  value={newOpportunity.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter opportunity description"
+                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-300">Value</label>
+                <input
+                  type="number"
+                  name="value"
+                  value={newOpportunity.value}
+                  onChange={handleInputChange}
+                  placeholder="Enter opportunity value"
+                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-300">Stage</label>
+                <select
+                  name="stage"
+                  value={newOpportunity.stage}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                >
+                  <option value="">Select a stage</option>
+                  {pipelines
+                    .find((p) => p.name === selectedPipeline)
+                    ?.stages.map((stage) => (
+                      <option key={stage._id} value={stage.name}>
+                        {stage.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={handleCloseAddModal}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddOpportunity}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+              >
+                Add Opportunity
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

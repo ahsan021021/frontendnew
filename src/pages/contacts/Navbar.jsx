@@ -7,7 +7,6 @@ export function Navbar() {
 
   const navItems = [
     { to: '/contacts', icon: Users, label: 'Contacts' },
-    { to: '/contacts/history', icon: History, label: 'Bulk History' },
     { to: '/contacts/restore', icon: RotateCcw, label: 'Restore Contacts' },
     { to: '/contacts/tasks', icon: CheckSquare, label: 'Tasks' },
     { to: '/contacts/add-company', icon: Building2, label: 'Add Company' },

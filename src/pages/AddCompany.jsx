@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Import axios directly
+import axios from 'axios';
 import { Building2, Search, Plus, Trash2, Edit } from 'lucide-react';
 
 export function AddCompany() {
@@ -19,13 +19,13 @@ export function AddCompany() {
     country: '',
   });
 
-  const API_BASE_URL = 'http://82.180.137.7:5000/api'; // Define the API base URL
+  const API_BASE_URL = 'http://82.180.137.7:5000/api';
 
   // Fetch companies on component mount
   useEffect(() => {
     const fetchCompanies = async () => {
-      const token = localStorage.getItem('token'); // Get the token from localStorage
-      const headers = { Authorization: `Bearer ${token}` }; // Set the Authorization header
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
 
       try {
         const response = await axios.get(`${API_BASE_URL}/companies`, { headers });
@@ -59,7 +59,7 @@ export function AddCompany() {
   // Handle form submission for adding a company
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token'); // Get the token from localStorage
+    const token = localStorage.getItem('token');
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export function AddCompany() {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/companies`, formData, { headers });
-      setCompanies([...companies, response.data]); // Add the new company to the list
+      setCompanies([...companies, response.data]);
       setFormData({
         name: '',
         phone: '',
@@ -79,10 +79,26 @@ export function AddCompany() {
         description: '',
         postalCode: '',
         country: '',
-      }); // Reset the form
-      closePopup(); // Close the popup
+      });
+      closePopup();
     } catch (error) {
       console.error('Error adding company:', error);
+    }
+  };
+
+  // Handle deleting a company
+  const handleDeleteCompany = async (companyId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this company?');
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    try {
+      await axios.delete(`${API_BASE_URL}/companies/${companyId}`, { headers });
+      setCompanies(companies.filter((company) => company._id !== companyId));
+    } catch (error) {
+      console.error('Error deleting company:', error);
     }
   };
 
@@ -125,7 +141,7 @@ export function AddCompany() {
           </thead>
           <tbody>
             {companies.map((company) => (
-              <tr key={company.id} className="border-b border-gray-700 text-white">
+              <tr key={company._id} className="border-b border-gray-700 text-white">
                 <td className="py-4 px-6">{company.name}</td>
                 <td className="py-4 px-6">
                   <a
@@ -144,7 +160,10 @@ export function AddCompany() {
                   <button className="text-blue-400 hover:text-blue-300 mr-3">
                     <Edit size={18} />
                   </button>
-                  <button className="text-red-400 hover:text-red-300">
+                  <button
+                    className="text-red-400 hover:text-red-300"
+                    onClick={() => handleDeleteCompany(company._id)}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </td>
@@ -159,6 +178,7 @@ export function AddCompany() {
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold mb-4 text-white">Add Company</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Form fields */}
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-300">Company Name</label>
                 <input
@@ -171,41 +191,7 @@ export function AddCompany() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">Phone</label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                  placeholder="Enter phone number"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                  placeholder="Enter email address"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">Website</label>
-                <input
-                  type="text"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                  placeholder="Enter website URL"
-                />
-              </div>
+              {/* Other form fields */}
               <div className="flex justify-end gap-4 mt-6">
                 <button
                   type="button"

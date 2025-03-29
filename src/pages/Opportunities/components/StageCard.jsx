@@ -1,23 +1,29 @@
 import React from 'react';
 
-function StageCard({ stage, onClick }) {
+function StageCard({ stage, opportunities, onClick }) {
   return (
-    <div 
-      className="bg-[#2a2a2a] rounded-xl p-4 md:p-6 border border-red-900/30 cursor-pointer hover:border-red-500 transition"
+    <div
+      className="bg-[#2a2a2a] border border-red-900/50 rounded-lg p-4 cursor-pointer hover:border-red-500 transition"
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${stage.id === '1' ? 'bg-blue-500' : 'bg-green-500'}`} />
-          <h3 className="text-base md:text-lg font-semibold truncate">{stage.name}</h3>
-        </div>
-        <div className="text-xs md:text-sm text-gray-400 whitespace-nowrap ml-2">
-          {stage.opportunities} Opportunities
-        </div>
-      </div>
-      <div className="text-xl md:text-2xl font-bold text-red-500">
-        Rs{stage.value.toLocaleString()}
-      </div>
+      <h3 className="text-lg font-bold text-white">{stage.name}</h3>
+      <p className="text-sm text-gray-400">
+        {opportunities.length} opportunities
+      </p>
+      <ul className="mt-2 space-y-2">
+        {opportunities.map((opportunity) => (
+          <li
+            key={opportunity._id}
+            className="bg-red-900/20 rounded-lg px-3 py-2 text-sm text-white"
+          >
+            <div className="font-medium">{opportunity.title}</div>
+            <div className="text-gray-400">
+              {/* Ensure value is defined before calling toLocaleString */}
+              Value: ${opportunity.value?.toLocaleString() || '0'}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

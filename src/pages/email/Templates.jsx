@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Grid, List, Plus, Trash2 } from 'lucide-react';
+import { Search, Grid, List, Plus, Trash2, Eye } from 'lucide-react';
 import axios from 'axios';
 
 // Create an axios instance with base URL and token interceptor
@@ -29,6 +29,9 @@ function Templates() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [previewContent, setPreviewContent] = useState(null); // For preview modal
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Modal state
+  const [isGridView, setIsGridView] = useState(true); // Toggle between grid and list view
 
   // Fetch templates from the backend
   const fetchTemplates = async () => {
@@ -84,6 +87,11 @@ function Templates() {
     }
   };
 
+  const handlePreview = (content) => {
+    setPreviewContent(content || 'No content available for preview.'); // Handle empty content
+    setIsPreviewOpen(true); // Open the modal
+  };
+
   const filteredTemplates = templates.filter((template) =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -116,22 +124,65 @@ function Templates() {
         </div>
 
         <div className="flex space-x-2">
-          <button className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700">
-            <Grid className="h-5 w-5" />
+          <button
+            className={`p-2 rounded-lg ${isGridView ? 'bg-blue-600' : 'bg-gray-800'} hover:bg-gray-700`}
+            onClick={() => setIsGridView(true)}
+          >
+            <Grid className="h-5 w-5 text-white" />
           </button>
-          <button className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700">
-            <List className="h-5 w-5" />
+          <button
+            className={`p-2 rounded-lg ${!isGridView ? 'bg-blue-600' : 'bg-gray-800'} hover:bg-gray-700`}
+            onClick={() => setIsGridView(false)}
+          >
+            <List className="h-5 w-5 text-white" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template) => (
-          <div key={template._id} className="bg-gray-800 rounded-lg overflow-hidden">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold">{template.name}</h3>
-              <p className="text-gray-400 text-sm mt-1">Category: {template.category}</p>
-              <div className="flex justify-between items-center mt-4">
+      {/* Render templates based on the selected view */}
+      {isGridView ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTemplates.map((template) => (
+            <div key={template._id} className="bg-gray-800 rounded-lg overflow-hidden">
+              <div className="p-4">
+                <h3 className="text-lg font-semibold">{template.name}</h3>
+                <p className="text-gray-400 text-sm mt-1">Category: {template.category}</p>
+                <div className="flex justify-between items-center mt-4">
+                  <button
+                    className="text-blue-500 hover:text-blue-400"
+                    onClick={() => handlePreview(template.content)} // Pass the HTML content
+                  >
+                    <Eye className="h-5 w-5" />
+                  </button>
+                  <button
+                    className="text-red-500 hover:text-red-400"
+                    onClick={() => handleDeleteTemplate(template._id)}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredTemplates.map((template) => (
+            <div
+              key={template._id}
+              className="bg-gray-800 rounded-lg p-4 flex justify-between items-center"
+            >
+              <div>
+                <h3 className="text-lg font-semibold">{template.name}</h3>
+                <p className="text-gray-400 text-sm">Category: {template.category}</p>
+              </div>
+              <div className="flex space-x-4">
+                <button
+                  className="text-blue-500 hover:text-blue-400"
+                  onClick={() => handlePreview(template.content)} // Pass the HTML content
+                >
+                  <Eye className="h-5 w-5" />
+                </button>
                 <button
                   className="text-red-500 hover:text-red-400"
                   onClick={() => handleDeleteTemplate(template._id)}
@@ -140,9 +191,9 @@ function Templates() {
                 </button>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-gray-800 rounded-lg p-6 mt-6">
@@ -193,6 +244,25 @@ function Templates() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 text-white rounded-lg shadow-lg w-11/12 max-w-4xl p-6 relative">
+            <button
+              onClick={() => setIsPreviewOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 text-2xl"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-4">Template Preview</h2>
+            <div
+              className="bg-white text-black p-4 rounded-lg overflow-auto max-h-[70vh]"
+              dangerouslySetInnerHTML={{ __html: previewContent }}
+            ></div>
+          </div>
         </div>
       )}
     </div>

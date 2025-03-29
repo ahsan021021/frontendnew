@@ -11,7 +11,7 @@ export function Tasks() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [newTask, setNewTask] = useState({
-    name: '',
+    title: '',
     description: '',
     status: 'To Do',
     dueDate: new Date().toISOString().split('T')[0],
@@ -54,7 +54,7 @@ export function Tasks() {
 
     const filtered = tasks.filter(
       (task) =>
-        task.name.toLowerCase().includes(query) || task.description.toLowerCase().includes(query)
+        task.title.toLowerCase().includes(query) || task.description.toLowerCase().includes(query)
     );
     setFilteredTasks(filtered);
   };
@@ -128,8 +128,8 @@ export function Tasks() {
   const filteredAndSortedTasks = filteredTasks.sort((a, b) => {
     let comparison = 0;
     switch (sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name);
+      case 'title':
+        comparison = a.title.localeCompare(b.title);
         break;
       case 'dueDate':
         const dateA = new Date(a.dueDate);
@@ -181,7 +181,7 @@ export function Tasks() {
           <table className="w-full">
             <thead>
               <tr className="text-left text-gray-400 border-b border-gray-700">
-                <th className="pb-4">Task Name</th>
+                <th className="pb-4">Task Title</th>
                 <th className="pb-4">Due Date</th>
                 <th className="pb-4">Status</th>
                 <th className="pb-4">Actions</th>
@@ -221,14 +221,14 @@ export function Tasks() {
             <h3 className="text-xl font-semibold mb-4 text-white">Create New Task</h3>
             <form onSubmit={handleAddTask} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">Task Name</label>
+                <label className="block text-sm font-medium mb-1 text-gray-300">Task Title</label>
                 <input
                   type="text"
-                  name="name"
-                  value={newTask.name}
-                  onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
+                  name="title"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                   className="w-full px-4 py-2 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                  placeholder="Enter task name"
+                  placeholder="Enter task title"
                   required
                 />
               </div>

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import axios from 'axios';
+import Select from 'react-select/creatable';
+import Dropzone from 'react-dropzone';
+import Papa from 'papaparse';
 
 function Campaigns() {
   const [showForm, setShowForm] = useState(false);
+  const [showCSVModal, setShowCSVModal] = useState(false);
+  const [showMappingModal, setShowMappingModal] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
   const [campaign, setCampaign] = useState({
     name: '',
@@ -13,17 +18,30 @@ function Campaigns() {
     recipients: [],
     scheduledDate: '',
   });
+  const [templates, setTemplates] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
+  const [csvData, setCsvData] = useState([]);
+  const [csvColumns, setCsvColumns] = useState([]);
+  const [selectedEmailColumn, setSelectedEmailColumn] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const token = localStorage.getItem('token'); // Get the JWT token from local storage
 
-  // Create axios instance with authorization token
+  // Create axios instance with token from localStorage
   const axiosInstance = axios.create({
     baseURL: 'http://82.180.137.7:5000/api',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
+
+  // Add a request interceptor to include the token in every request
+  axiosInstance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   // Fetch campaigns from the backend
   const fetchCampaigns = async () => {
@@ -40,8 +58,40 @@ function Campaigns() {
     }
   };
 
+  // Fetch templates from the backend
+  const fetchTemplates = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axiosInstance.get('/templates');
+      setTemplates(response.data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      setError(error.response?.data?.message || 'Failed to fetch templates. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch subscribers from the backend
+  const fetchSubscribers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axiosInstance.get('/subscribers');
+      setSubscribers(response.data);
+    } catch (error) {
+      console.error('Error fetching subscribers:', error);
+      setError(error.response?.data?.message || 'Failed to fetch subscribers. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCampaigns();
+    fetchTemplates();
+    fetchSubscribers();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -50,19 +100,30 @@ function Campaigns() {
     setError('');
 
     // Validation
-    if (!campaign.name || !campaign.subject || !campaign.content || campaign.recipients.length === 0) {
+    if (!campaign.name || !campaign.subject || !campaign.content || !campaign.template || campaign.recipients.length === 0) {
       setError('Please fill in all required fields and select at least one recipient.');
       setLoading(false);
       return;
     }
 
+    if (new Date(campaign.scheduledDate) < new Date()) {
+      setError('Scheduled date cannot be in the past.');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const campaignData = {
+        ...campaign,
+        recipients: campaign.recipients.map((recipient) => recipient.value || recipient.label),
+      };
+
       if (campaign.id) {
         // Update existing campaign
-        await axiosInstance.put(`/campaigns/${campaign.id}`, campaign);
+        await axiosInstance.put(`/campaigns/${campaign.id}`, campaignData);
       } else {
         // Create new campaign
-        await axiosInstance.post('/campaigns', campaign);
+        await axiosInstance.post('/campaigns', campaignData);
       }
 
       resetForm();
@@ -81,7 +142,14 @@ function Campaigns() {
   };
 
   const handleEditCampaign = (campaign) => {
-    setCampaign({ ...campaign, id: campaign._id });
+    setCampaign({
+      ...campaign,
+      id: campaign._id,
+      recipients: campaign.recipients.map((recipient) => ({
+        value: recipient,
+        label: recipient,
+      })),
+    });
     setShowForm(true);
   };
 
@@ -101,6 +169,71 @@ function Campaigns() {
       setLoading(false);
     }
   };
+
+  const handleSendCampaign = async (id) => {
+    setLoading(true);
+    setError('');
+    try {
+      await axiosInstance.post(`/campaigns/${id}/send`);
+      alert('Campaign sent successfully!');
+    } catch (error) {
+      console.error('Error sending campaign:', error);
+      setError('Failed to send campaign. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectAllRecipients = () => {
+    setCampaign({
+      ...campaign,
+      recipients: subscribers.map((subscriber) => ({
+        value: subscriber.email,
+        label: subscriber.email,
+      })),
+    });
+  };
+
+  const handleRecipientChange = (selectedOptions) => {
+    setCampaign({ ...campaign, recipients: selectedOptions });
+  };
+
+  const handleCSVImport = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    Papa.parse(file, {
+      header: true,
+      complete: (results) => {
+        setCsvData(results.data);
+        setCsvColumns(Object.keys(results.data[0]));
+        setShowCSVModal(false);
+        setShowMappingModal(true);
+      },
+    });
+  };
+
+  const handleMappingSubmit = () => {
+    const emails = csvData
+      .map((row) => row[selectedEmailColumn])
+      .filter((email) => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+
+    if (emails.length === 0) {
+      alert('No valid email addresses found in the selected column.');
+      return;
+    }
+
+    const newRecipients = emails.map((email) => ({
+      value: email,
+      label: email,
+    }));
+
+    setCampaign({ ...campaign, recipients: [...campaign.recipients, ...newRecipients] });
+    setShowMappingModal(false);
+  };
+
+  const recipientOptions = subscribers.map((subscriber) => ({
+    value: subscriber.email,
+    label: subscriber.email,
+  }));
 
   return (
     <div>
@@ -140,6 +273,12 @@ function Campaigns() {
                       Edit
                     </button>
                     <button
+                      className="text-green-400 hover:text-green-300"
+                      onClick={() => handleSendCampaign(campaign._id)}
+                    >
+                      Send Now
+                    </button>
+                    <button
                       className="text-red-400 hover:text-red-300"
                       onClick={() => handleDeleteCampaign(campaign._id)}
                     >
@@ -159,6 +298,7 @@ function Campaigns() {
         </table>
       </div>
 
+      {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
@@ -185,6 +325,22 @@ function Campaigns() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1">Template</label>
+                <select
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  value={campaign.template}
+                  onChange={(e) => setCampaign({ ...campaign, template: e.target.value })}
+                  required
+                >
+                  <option value="">Select Template</option>
+                  {templates.map((template) => (
+                    <option key={template._id} value={template._id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1">Content</label>
                 <textarea
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
@@ -203,6 +359,31 @@ function Campaigns() {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Recipients</label>
+                <Select
+                  isMulti
+                  options={recipientOptions}
+                  value={campaign.recipients}
+                  onChange={handleRecipientChange}
+                  placeholder="Type to search and select recipients..."
+                  noOptionsMessage={() => 'No subscribers found'}
+                />
+                <button
+                  type="button"
+                  className="mt-2 text-blue-400 hover:text-blue-300"
+                  onClick={handleSelectAllRecipients}
+                >
+                  Select All Recipients
+                </button>
+                <button
+                  type="button"
+                  className="mt-2 text-blue-400 hover:text-blue-300"
+                  onClick={() => setShowCSVModal(true)}
+                >
+                  Import from CSV
+                </button>
+              </div>
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
@@ -219,6 +400,69 @@ function Campaigns() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      {showCSVModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+            <h3 className="text-xl font-semibold mb-4">Import Recipients from CSV</h3>
+            <Dropzone onDrop={handleCSVImport}>
+              {({ getRootProps, getInputProps }) => (
+                <div
+                  {...getRootProps()}
+                  className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer"
+                >
+                  <input {...getInputProps()} />
+                  <p className="text-gray-400">Drag & drop a CSV file here, or click to select a file</p>
+                </div>
+              )}
+            </Dropzone>
+            <div className="flex justify-end mt-4">
+              <button
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
+                onClick={() => setShowCSVModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mapping Modal */}
+      {showMappingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+            <h3 className="text-xl font-semibold mb-4">Map Email Column</h3>
+            <select
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+              onChange={(e) => setSelectedEmailColumn(e.target.value)}
+              value={selectedEmailColumn}
+            >
+              <option value="">Select Email Column</option>
+              {csvColumns.map((column) => (
+                <option key={column} value={column}>
+                  {column}
+                </option>
+              ))}
+            </select>
+            <div className="flex justify-end mt-4 space-x-4">
+              <button
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
+                onClick={() => setShowMappingModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                onClick={handleMappingSubmit}
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
       )}

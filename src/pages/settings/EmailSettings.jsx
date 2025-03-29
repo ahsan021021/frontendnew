@@ -4,8 +4,8 @@ import axios from 'axios';
 
 function EmailSettings() {
   const [formData, setFormData] = useState({
-    smtpHost: '',
-    smtpPort: '',
+    smtpServer: '',
+    port: '',
     security: 'tls',
     fromName: '',
     fromEmail: '',
@@ -25,8 +25,8 @@ function EmailSettings() {
         if (response.status === 200) {
           const settings = response.data;
           setFormData({
-            smtpHost: settings.smtpServer || '',
-            smtpPort: settings.port || '',
+            smtpServer: settings.smtpServer || '',
+            port: settings.port || '',
             security: settings.security || 'tls',
             fromName: settings.fromName || '',
             fromEmail: settings.fromEmail || '',
@@ -99,15 +99,15 @@ function EmailSettings() {
               <h4 className="text-lg font-medium text-white mb-4">SMTP Configuration</h4>
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div className="group">
-                  <label htmlFor="smtpHost" className="block text-sm font-medium text-gray-200 mb-2">
-                    SMTP Host
+                  <label htmlFor="smtpServer" className="block text-sm font-medium text-gray-200 mb-2">
+                    SMTP Server
                   </label>
                   <input
                     type="text"
-                    name="smtpHost"
-                    id="smtpHost"
+                    name="smtpServer"
+                    id="smtpServer"
                     placeholder="smtp.example.com"
-                    value={formData.smtpHost}
+                    value={formData.smtpServer}
                     onChange={handleChange}
                     className="block w-full px-4 py-3 rounded-lg border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 
                              transition-all duration-200 ease-in-out
@@ -117,15 +117,15 @@ function EmailSettings() {
                 </div>
 
                 <div className="group">
-                  <label htmlFor="smtpPort" className="block text-sm font-medium text-gray-200 mb-2">
-                    SMTP Port
+                  <label htmlFor="port" className="block text-sm font-medium text-gray-200 mb-2">
+                    Port
                   </label>
                   <input
                     type="text"
-                    name="smtpPort"
-                    id="smtpPort"
+                    name="port"
+                    id="port"
                     placeholder="587"
-                    value={formData.smtpPort}
+                    value={formData.port}
                     onChange={handleChange}
                     className="block w-full px-4 py-3 rounded-lg border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 
                              transition-all duration-200 ease-in-out

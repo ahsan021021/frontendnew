@@ -18,7 +18,7 @@ const Dashboard = () => {
   const [contacts, setContacts] = useState({ total: 0, daily: [] });
   const [scrapingUsage, setScrapingUsage] = useState({ used: 0, total: 50 });
   const [pipelines, setPipelines] = useState({ total: 0 });
-  const [meetings, setMeetings] = useState({total: 0});
+  const [meetings, setMeetings] = useState([]);
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
@@ -154,21 +154,10 @@ const Dashboard = () => {
       </div>
     );
   }
-  const upcomingMeetings = [
-    { title: 'Product Demo', date: 'Mar 15, 2025', time: '2:00 PM' },
-    { title: 'Client Meeting', date: 'Mar 16, 2025', time: '11:30 AM' },
-    { title: 'Team Sync', date: 'Mar 17, 2025', time: '3:00 PM' },
-  ];
-
-  const todos = [
-    { task: 'Update contact list', status: 'In Progress' },
-    { task: 'Send follow-up emails', status: 'Completed' },
-    { task: 'Prepare presentation', status: 'To Do' },
-  ];
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-gray-900 text-white">
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6" style={{ marginLeft: "250px" }}>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Dashboard Overview</h1>
           <div className="flex items-center gap-4">
@@ -229,15 +218,24 @@ const Dashboard = () => {
                   {scrapingUsage.used}/{scrapingUsage.total}
                 </h2>
               </div>
-              
             </div>
-            
           </div>
+
           <div className="bg-gray-800/50 p-6 rounded-lg">
             <div className="flex items-center gap-4">
               <div className="bg-purple-500/20 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg
+                  className="h-6 w-6 text-purple-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
                 </svg>
               </div>
               <div>
@@ -246,21 +244,31 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
           <div className="bg-gray-800/50 p-6 rounded-lg">
             <div className="flex items-center gap-4">
               <div className="bg-yellow-500/20 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="h-6 w-6 text-yellow-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               </div>
               <div>
                 <p className="text-gray-400 text-sm">Upcoming Meetings</p>
-                <h2 className="text-2xl font-bold">{mergeWithLast7Days.total}</h2>
+                <h2 className="text-2xl font-bold">{meetings.length}</h2>
               </div>
             </div>
           </div>
         </div>
-        
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-800/50 p-6 rounded-lg">
@@ -288,16 +296,22 @@ const Dashboard = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+
           <div className="bg-gray-800/50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold mb-4">Upcoming Meetings</h3>
             <div className="space-y-4">
-              {upcomingMeetings.map((meeting, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg">
+              {meetings.map((meeting, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg"
+                >
                   <div>
                     <h4 className="font-medium">{meeting.title}</h4>
-                    <p className="text-sm text-gray-400">{meeting.date}</p>
+                    <p className="text-sm text-gray-400">
+                      {new Date(meeting.date).toLocaleDateString()} at{" "}
+                      {meeting.startTime}
+                    </p>
                   </div>
-                  <span className="text-sm text-gray-300">{meeting.time}</span>
                 </div>
               ))}
             </div>
@@ -306,20 +320,27 @@ const Dashboard = () => {
           <div className="bg-gray-800/50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold mb-4">To-Do Tasks</h3>
             <div className="space-y-4">
-              {todos.map((todo, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg">
-                  <span className="font-medium">{todo.task}</span>
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    todo.status === 'Completed' ? 'bg-green-500/20 text-green-400' :
-                    todo.status === 'In Progress' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-blue-500/20 text-blue-400'
-                  }`}>
-                    {todo.status}
+              {tasks.map((task, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg"
+                >
+                  <span className="font-medium">{task.title}</span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      task.status === "Completed"
+                        ? "bg-green-500/20 text-green-400"
+                        : task.status === "In Progress"
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-blue-500/20 text-blue-400"
+                    }`}
+                  >
+                    {task.status}
                   </span>
                 </div>
               ))}
             </div>
-            </div>
+          </div>
         </div>
       </div>
     </div>

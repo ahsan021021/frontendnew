@@ -46,9 +46,7 @@ import OppLayout from './pages/Opportunities/Layout'
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
-import Scraper from './pages/Scraper';
-import CsvHistory from './pages/CsvHistory';
-import ExportManager from './pages/ExportManager';
+import Scraper from './pages/Scrapper/Scrapper.jsx'
 
 
 const App = () => {
@@ -90,7 +88,7 @@ const App = () => {
             <div className="flex min-h-screen bg-gray-900">
             {/* Main Sidebar */}
             <div
-              className={`fixed inset-y-0 left-0 w-64 transform ${
+              className={`fixed inset-y-0 left-0 w-60 transform ${
                 isSidebarOpen ? "translate-x-0" : "-translate-x-full"
               } lg:translate-x-0 transition duration-200 ease-in-out z-30 bg-gray-800`}
             >
@@ -106,13 +104,13 @@ const App = () => {
             </button>
       
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto bg-gray-800 text-white">
+            <main className=" flex-1 p-10px overflow-y-auto bg-gray-800 text-white" style={{marginLeft: "240px"}}>
               <Outlet />
             </main>
           </div>
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/opportunities" element={<OppLayout />} />
           <Route path="bulk-actions" element={<BulkActions />} />
           <Route path="conversation" element={<Conversation />} />
@@ -139,6 +137,7 @@ const App = () => {
             <Route path="tasks" element={<Tasks />} />
             <Route path="add-company" element={<AddCompany />} />
           </Route>
+          <Route path="/scraper" element={<Scraper />} />
 
           <Route
             path="/scraper"
@@ -230,7 +229,7 @@ const App = () => {
           }
         />
         <Route
-          path="/reset-otp"
+          path="/verify-code"
           element={
             <AuthLayout>
               <PasswordResetOTPPage />
