@@ -11,7 +11,7 @@ function ExportManager() {
     const fetchExports = async () => {
       try {
         const token = localStorage.getItem('token'); // Get token from localStorage
-        const response = await axios.get('https://leadsavvyai.com/api/export-manager', {
+        const response = await axios.get('http://82.180.137.7:5000/api/export-manager', {
           headers: {
             Authorization: `Bearer ${token}`, // Add token to headers
           },

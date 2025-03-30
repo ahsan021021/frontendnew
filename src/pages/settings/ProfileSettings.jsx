@@ -16,7 +16,7 @@ function ProfileSettings() {
   useEffect(() => {
     const fetchMyProfile = async () => {
       try {
-        const response = await axios.get('https://leadsavvyai.com/api/users/profile', {
+        const response = await axios.get('http://82.180.137.7:5000/api/users/profile', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const profile = response.data;
@@ -45,7 +45,7 @@ function ProfileSettings() {
     e.preventDefault();
     try {
       const response = await axios.put(
-        'https://leadsavvyai.com/api/users/profile',
+        'http://82.180.137.7:5000/api/users/profile',
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -86,7 +86,7 @@ function ProfileSettings() {
 
     try {
       const response = await axios.put(
-        'https://leadsavvyai.com/api/users/change-password',
+        'http://82.180.137.7:5000/api/users/change-password',
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,

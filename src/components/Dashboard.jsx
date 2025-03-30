@@ -32,7 +32,7 @@ const Dashboard = () => {
 
         // Fetch emails scraped history
         const emailsResponse = await axios.get(
-          "https://leadsavvyai.com/api/history/emails",
+          "http://82.180.137.7:5000/api/history/emails",
           { headers }
         );
         const totalEmails = emailsResponse.data.reduce(
@@ -49,7 +49,7 @@ const Dashboard = () => {
 
         // Fetch contacts added history
         const contactsResponse = await axios.get(
-          "https://leadsavvyai.com/api/history/contacts",
+          "http://82.180.137.7:5000/api/history/contacts",
           { headers }
         );
         const totalContacts = contactsResponse.data.reduce(
@@ -66,14 +66,14 @@ const Dashboard = () => {
 
         // Fetch scraping usage
         const scrapingResponse = await axios.get(
-          "https://leadsavvyai.com/api/dashboard/scraping-usage",
+          "http://82.180.137.7:5000/api/dashboard/scraping-usage",
           { headers }
         );
         setScrapingUsage(scrapingResponse.data);
 
         // Fetch pipelines
         const pipelinesResponse = await axios.get(
-          "https://leadsavvyai.com/api/pipelines",
+          "http://82.180.137.7:5000/api/pipelines",
           { headers }
         );
         setPipelines({
@@ -82,14 +82,14 @@ const Dashboard = () => {
 
         // Fetch upcoming meetings
         const meetingsResponse = await axios.get(
-          "https://leadsavvyai.com/api/meeting",
+          "http://82.180.137.7:5000/api/meeting",
           { headers }
         );
         setMeetings(meetingsResponse.data);
 
         // Fetch to-do tasks
         const tasksResponse = await axios.get(
-          "https://leadsavvyai.com/api/tasks",
+          "http://82.180.137.7:5000/api/tasks",
           { headers }
         );
         setTasks(tasksResponse.data);

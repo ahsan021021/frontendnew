@@ -26,7 +26,7 @@ export function Tasks() {
       const headers = { Authorization: `Bearer ${token}` };
 
       try {
-        const response = await axios.get('https://leadsavvyai.com/api/tasks', { headers });
+        const response = await axios.get('http://82.180.137.7:5000/api/tasks', { headers });
         setTasks(response.data);
         setFilteredTasks(response.data); // Initialize filtered tasks
         setLoading(false);
@@ -81,7 +81,7 @@ export function Tasks() {
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
     try {
-      const response = await axios.post('https://leadsavvyai.com/api/tasks', newTask, { headers });
+      const response = await axios.post('http://82.180.137.7:5000/api/tasks', newTask, { headers });
       setTasks([...tasks, response.data]); // Add the new task to the list
       setFilteredTasks([...tasks, response.data]); // Update filtered tasks
       setNewTask({
@@ -102,7 +102,7 @@ export function Tasks() {
     const headers = { Authorization: `Bearer ${token}` };
 
     try {
-      await axios.delete(`https://leadsavvyai.com/api/tasks/${taskId}`, { headers });
+      await axios.delete(`http://82.180.137.7:5000/api/tasks/${taskId}`, { headers });
       setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId)); // Remove the task from the list
       setFilteredTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId)); // Update filtered tasks
       alert('Task deleted successfully!');

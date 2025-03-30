@@ -12,7 +12,7 @@ export function ForgotPasswordPage() {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("https://leadsavvyai.com/api/forgot-password", {
+      const response = await axios.post("http://82.180.137.7:5000/api/forgot-password", {
         email,
       });
       setMessage(response.data.message);

@@ -16,7 +16,7 @@ function EmailSettings() {
   useEffect(() => {
     const fetchEmailSettings = async () => {
       try {
-        const response = await axios.get('https://leadsavvyai.com/api/email-settings', {
+        const response = await axios.get('http://82.180.137.7:5000/api/email-settings', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -50,7 +50,7 @@ function EmailSettings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://leadsavvyai.com/api/email-settings', formData, {
+      const response = await axios.post('http://82.180.137.7:5000/api/email-settings', formData, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -71,7 +71,7 @@ function EmailSettings() {
   // Handle testing the email connection
   const handleTestConnection = async () => {
     try {
-      const response = await axios.post('https://leadsavvyai.com/api/email-settings/test', formData, {
+      const response = await axios.post('http://82.180.137.7:5000/api/email-settings/test', formData, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,

@@ -33,7 +33,7 @@ function Scraper() {
     const fetchCSVHistory = async () => {
       try {
         const token = localStorage.getItem('token'); // Get token from localStorage
-        const response = await axios.get('https://leadsavvyai.com/api/history', {
+        const response = await axios.get('http://82.180.137.7:5000/api/history', {
           headers: {
             Authorization: `Bearer ${token}`, // Add token to headers
           },
@@ -57,7 +57,7 @@ function Scraper() {
     try {
       const token = localStorage.getItem('token'); // Get token from localStorage
       const response = await axios.post(
-        'https://leadsavvyai.com/api/scrape',
+        'http://82.180.137.7:5000/api/scrape',
         formData,
         {
           headers: {
@@ -87,7 +87,7 @@ function Scraper() {
     try {
       const token = localStorage.getItem('token'); // Get token from localStorage
       const response = await axios.post(
-        'https://leadsavvyai.com/api/export',
+        'http://82.180.137.7:5000/api/export',
         { results: customResults },
         {
           headers: {
@@ -141,7 +141,7 @@ function Scraper() {
   const handleDeleteFromHistory = async (id) => {
     try {
       const token = localStorage.getItem('token'); // Get token from localStorage
-      await axios.delete(`https://leadsavvyai.com/api/scrapehistory/${id}`, {
+      await axios.delete(`http://82.180.137.7:5000/api/scrapehistory/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`, // Add token to headers
         },

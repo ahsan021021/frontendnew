@@ -14,7 +14,7 @@ function BusinessSettings() {
   useEffect(() => {
     const fetchBusinessProfile = async () => {
       try {
-        const response = await axios.get('https://leadsavvyai.com/api/business-profile', {
+        const response = await axios.get('http://82.180.137.7:5000/api/business-profile', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const profile = response.data;
@@ -42,7 +42,7 @@ function BusinessSettings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://leadsavvyai.com/api/business-profile', formData, {
+      const response = await axios.post('http://82.180.137.7:5000/api/business-profile', formData, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
