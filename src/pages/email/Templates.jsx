@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Create an axios instance with base URL and token interceptor
 const instance = axios.create({
-  baseURL: 'http://82.180.137.7:5000/api',
+  baseURL: 'https://leadsavvyai.com/api',
   headers: {
     'Content-Type': 'application/json',
   },

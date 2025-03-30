@@ -15,7 +15,7 @@ export function VerifyCodePage() {
     e.preventDefault();
     setLoading(true); // Set loading to true when verification starts
     try {
-      const response = await axios.post("http://82.180.137.7:5000/api/verify-email", {
+      const response = await axios.post("https://leadsavvyai.com/api/verify-email", {
         email,
         verificationCode,
       });

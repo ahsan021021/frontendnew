@@ -22,7 +22,7 @@ export default function Signup() {
 
     setLoading(true); // Set loading to true when signup starts
     try {
-      const response = await axios.post("http://82.180.137.7:5000/api/signup", {
+      const response = await axios.post("https://leadsavvyai.com/api/signup", {
         email,
         username,
         password,

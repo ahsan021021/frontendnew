@@ -19,7 +19,7 @@ export function AddCompany() {
     country: '',
   });
 
-  const API_BASE_URL = 'http://82.180.137.7:5000/api';
+  const API_BASE_URL = 'https://leadsavvyai.com/api';
 
   // Fetch companies on component mount
   useEffect(() => {

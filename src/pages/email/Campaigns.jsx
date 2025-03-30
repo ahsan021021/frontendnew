@@ -28,7 +28,7 @@ function Campaigns() {
 
   // Create axios instance with token from localStorage
   const axiosInstance = axios.create({
-    baseURL: 'http://82.180.137.7:5000/api',
+    baseURL: 'https://leadsavvyai.com/api',
   });
 
   // Add a request interceptor to include the token in every request

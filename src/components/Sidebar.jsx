@@ -16,7 +16,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://82.180.137.7:5000/api/users/profile", {
+        const response = await axios.get("https://leadsavvyai.com/api/users/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

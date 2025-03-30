@@ -14,7 +14,7 @@ export function LoginPage() {
     e.preventDefault();
     setLoading(true); // Set loading to true when login starts
     try {
-      const response = await axios.post("http://82.180.137.7:5000/api/login", {
+      const response = await axios.post("https://leadsavvyai.com/api/login", {
         email,
         password,
       });
@@ -34,7 +34,7 @@ export function LoginPage() {
         // Resend the verification email
         try {
           const resendResponse = await axios.post(
-            "http://82.180.137.7:5000/api/resend-verification-email",
+            "https://leadsavvyai.com/api/resend-verification-email",
             {
               email,
             }

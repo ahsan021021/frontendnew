@@ -22,7 +22,7 @@ function Opportunities() {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        const response = await axios.get('http://82.180.137.7:5000/api/pipelines', { headers });
+        const response = await axios.get('https://leadsavvyai.com/api/pipelines', { headers });
         setPipelines(response.data);
         if (response.data.length > 0) {
           setSelectedPipeline(response.data[0].name);
@@ -52,7 +52,7 @@ function Opportunities() {
         await Promise.all(
           pipeline.stages.map(async (stage) => {
             const response = await axios.get(
-              `http://82.180.137.7:5000/api/opportunities/${pipeline._id}/${stage._id}/opportunities`,
+              `https://leadsavvyai.com/api/opportunities/${pipeline._id}/${stage._id}/opportunities`,
               { headers }
             );
             opportunitiesByStage[stage._id] = response.data;
@@ -120,7 +120,7 @@ function Opportunities() {
       const stageId = stage._id;
 
       const response = await axios.post(
-        `http://82.180.137.7:5000/api/opportunities/${pipelineId}/${stageId}/opportunities`,
+        `https://leadsavvyai.com/api/opportunities/${pipelineId}/${stageId}/opportunities`,
         {
           title: newOpportunity.name,
           description: newOpportunity.description || '',
